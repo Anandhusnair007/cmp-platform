@@ -250,3 +250,4 @@ MIT License - See LICENSE file for details
 - [ ] Certificate compliance scanning
 - [ ] Multi-tenant isolation
 - [ ] HSM integration for key management
+# cmp-platform
