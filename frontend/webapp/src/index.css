@@ -1,0 +1,224 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-gray-100;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+/* Professional Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-950 border-l border-slate-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gradient-to-b from-cyan-600 to-blue-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply from-cyan-500 to-blue-500;
+}
+
+/* Loading Spinner - Enterprise Style */
+.spinner {
+  border: 3px solid rgba(59, 130, 246, 0.1);
+  border-top-color: #06b6d4;
+  border-radius: 50%;
+  animation: spin 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Gradient Text Effect */
+.gradient-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-600;
+}
+
+/* Glass Morphism Effect */
+.glass {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+/* Cyber Grid Background */
+.cyber-grid {
+  background-image: 
+    linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  background-position: -1px -1px;
+}
+
+/* Neon Glow Effect */
+.neon-glow {
+  text-shadow: 
+    0 0 10px rgba(6, 182, 212, 0.5),
+    0 0 20px rgba(6, 182, 212, 0.3),
+    0 0 30px rgba(6, 182, 212, 0.2);
+}
+
+/* Pulse Animation */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(6, 182, 212, 0.6);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Card Hover Effects */
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.3),
+    0 10px 10px -5px rgba(0, 0, 0, 0.2),
+    0 0 30px rgba(6, 182, 212, 0.2);
+}
+
+/* Button Styles - Enterprise Grade */
+.btn-primary {
+  @apply px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold rounded-lg shadow-lg transition-all duration-300;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(6, 182, 212, 0.3);
+}
+
+.btn-secondary {
+  @apply px-6 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-semibold rounded-lg transition-all duration-300;
+}
+
+/* Input Styles - Professional */
+.input-cyber {
+  @apply w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-300;
+}
+
+.input-cyber:focus {
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.15);
+}
+
+/* Badge Styles */
+.badge {
+  @apply px-3 py-1 rounded-full text-xs font-semibold;
+}
+
+.badge-success {
+  @apply bg-emerald-900/50 text-emerald-400 border border-emerald-600/30;
+}
+
+.badge-warning {
+  @apply bg-amber-900/50 text-amber-400 border border-amber-600/30;
+}
+
+.badge-danger {
+  @apply bg-red-900/50 text-red-400 border border-red-600/30;
+}
+
+.badge-info {
+  @apply bg-cyan-900/50 text-cyan-400 border border-cyan-600/30;
+}
+
+/* Table Styles - Enterprise */
+.table-cyber {
+  @apply w-full;
+}
+
+.table-cyber thead th {
+  @apply px-6 py-4 text-left text-xs font-semibold text-cyan-400 uppercase tracking-wider bg-slate-900/50 border-b border-slate-700;
+}
+
+.table-cyber tbody tr {
+  @apply border-b border-slate-800 hover:bg-slate-800/30 transition-colors duration-200;
+}
+
+.table-cyber tbody td {
+  @apply px-6 py-4 text-sm text-slate-300;
+}
+
+/* Animated Background Gradients */
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animated-gradient {
+  background: linear-gradient(-45deg, #0f172a, #1e293b, #0c4a6e, #075985);
+  background-size: 400% 400%;
+  animation: gradient-shift 15s ease infinite;
+}
+
+/* Stats Card Animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Loading State */
+.skeleton {
+  @apply bg-slate-800 animate-pulse rounded;
+}
+
+/* Shadow Variations */
+.shadow-cyber {
+  box-shadow: 
+    0 0 20px rgba(6, 182, 212, 0.1),
+    0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.shadow-cyber-lg {
+  box-shadow: 
+    0 0 40px rgba(6, 182, 212, 0.2),
+    0 20px 50px rgba(0, 0, 0, 0.4);
+}
+
+/* Security Shield Icon Animation */
+@keyframes shield-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+.shield-pulse {
+  animation: shield-pulse 3s ease-in-out infinite;
+}

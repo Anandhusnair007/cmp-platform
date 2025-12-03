@@ -1,0 +1,22 @@
+[Unit]
+Description=CMP Nginx Reverse Proxy - Enterprise Certificate Management Platform
+Documentation=https://github.com/cmp-platform/cmp-platform
+After=network.target cmp-inventory.service cmp-issuer.service cmp-adapter.service cmp-auth.service
+Wants=cmp-inventory.service cmp-issuer.service cmp-adapter.service cmp-auth.service
+Requires=network.target
+
+[Service]
+Type=forking
+PIDFile=/var/run/nginx/cmp-nginx.pid
+ExecStartPre=/usr/sbin/nginx -t -c /etc/nginx/cmp/cmp-nginx.conf -g "pid /var/run/nginx/cmp-nginx.pid;"
+ExecStart=/usr/sbin/nginx -c /etc/nginx/cmp/cmp-nginx.conf -g "pid /var/run/nginx/cmp-nginx.pid;"
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s QUIT $MAINPID
+TimeoutStopSec=5
+PrivateTmp=true
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+

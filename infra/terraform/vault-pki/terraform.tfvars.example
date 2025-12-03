@@ -1,0 +1,9 @@
+vault_address = "http://localhost:8200"
+vault_token   = "dev-only-token"
+pki_path      = "cmp-pki"
+ca_common_name = "CMP Root CA"
+role_name     = "cmp-role"
+allowed_domains = [
+  "staging.example.com",
+  "example.com"
+]

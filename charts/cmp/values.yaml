@@ -1,0 +1,92 @@
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+
+inventory:
+  replicaCount: 2
+  image:
+    repository: cmp-inventory
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8081
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+issuer:
+  replicaCount: 2
+  image:
+    repository: cmp-issuer
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8082
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+adapter:
+  replicaCount: 2
+  image:
+    repository: cmp-adapter
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8083
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "cmp_pass"
+    database: "cmp_db"
+  persistence:
+    enabled: true
+    size: 10Gi
+
+redis:
+  enabled: true
+  auth:
+    enabled: false
+  persistence:
+    enabled: false
+
+vault:
+  enabled: false  # Use external Vault in production
+
+frontend:
+  replicaCount: 2
+  image:
+    repository: cmp-frontend
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 3000
+  ingress:
+    enabled: false
+    className: "nginx"
+    annotations: {}
+    hosts:
+      - host: cmp.example.com
+        paths:
+          - path: /
+            pathType: Prefix

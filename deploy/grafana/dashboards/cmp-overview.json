@@ -1,0 +1,104 @@
+{
+  "dashboard": {
+    "title": "CMP Platform Overview",
+    "tags": ["cmp", "certificates"],
+    "timezone": "browser",
+    "schemaVersion": 27,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Certificate Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "certificates_total{status=\"active\"}",
+            "legendFormat": "Active"
+          },
+          {
+            "expr": "certificates_total{status=\"expired\"}",
+            "legendFormat": "Expired"
+          },
+          {
+            "expr": "certificates_total{status=\"revoked\"}",
+            "legendFormat": "Revoked"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Certificates Expiring",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "certificates_expiring{days=\"7\"}",
+            "legendFormat": "7 Days"
+          },
+          {
+            "expr": "certificates_expiring{days=\"15\"}",
+            "legendFormat": "15 Days"
+          },
+          {
+            "expr": "certificates_expiring{days=\"30\"}",
+            "legendFormat": "30 Days"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 18, "x": 6, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Certificate Issuance Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(certificate_issuance_total[5m])",
+            "legendFormat": "{{adapter}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Agent Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "agents_total{status=\"online\"}",
+            "legendFormat": "Online"
+          },
+          {
+            "expr": "agents_total{status=\"offline\"}",
+            "legendFormat": "Offline"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      },
+      {
+        "id": 5,
+        "title": "HTTP Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "{{method}} {{endpoint}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+      },
+      {
+        "id": 6,
+        "title": "HTTP Error Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{status=~\"4xx|5xx\"}[5m])",
+            "legendFormat": "{{status}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+      }
+    ]
+  }
+}

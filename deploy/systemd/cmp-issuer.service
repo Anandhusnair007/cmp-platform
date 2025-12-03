@@ -1,0 +1,55 @@
+[Unit]
+Description=CMP Issuer Service - Enterprise Certificate Management Platform
+Documentation=https://github.com/cmp-platform/cmp-platform
+After=network.target postgresql.service redis.service vault.service
+Wants=postgresql.service redis.service vault.service
+Requires=network.target
+
+[Service]
+Type=simple
+User=cmp
+Group=cmp
+WorkingDirectory=/opt/cmp/backend
+EnvironmentFile=-/etc/cmp/cmp-issuer.env
+Environment="GIN_MODE=release"
+Environment="SERVER_PORT=8082"
+Environment="LOG_LEVEL=info"
+ExecStart=/opt/cmp/bin/issuer-service
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=cmp-issuer
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/cmp /var/log/cmp
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+MemoryMax=2G
+CPUQuota=200%
+
+# Health check
+TimeoutStartSec=60
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
+

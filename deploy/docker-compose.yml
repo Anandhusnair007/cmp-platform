@@ -1,0 +1,197 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: cmp-postgres
+    environment:
+      POSTGRES_USER: cmp_user
+      POSTGRES_PASSWORD: cmp_pass
+      POSTGRES_DB: cmp_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cmp_user"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: cmp-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  vault:
+    image: hashicorp/vault:1.15
+    container_name: cmp-vault
+    cap_add:
+      - IPC_LOCK
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: dev-only-token
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+    ports:
+      - "8200:8200"
+    volumes:
+      - vault_data:/vault/file
+      - ./vault-init.sh:/vault-init.sh
+    command: ["vault", "server", "-dev", "-dev-root-token-id=dev-only-token"]
+    healthcheck:
+      test: ["CMD", "vault", "status"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  inventory-service:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.inventory
+    container_name: cmp-inventory
+    environment:
+      SERVER_PORT: 8081
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: cmp_user
+      DB_PASSWORD: cmp_pass
+      DB_NAME: cmp_db
+      DB_SSLMODE: disable
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8081/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  issuer-service:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.issuer
+    container_name: cmp-issuer
+    environment:
+      SERVER_PORT: 8082
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: cmp_user
+      DB_PASSWORD: cmp_pass
+      DB_NAME: cmp_db
+      DB_SSLMODE: disable
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: dev-only-token
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      vault:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8082/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  adapter-service:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.adapter
+    container_name: cmp-adapter
+    environment:
+      SERVER_PORT: 8083
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: cmp_user
+      DB_PASSWORD: cmp_pass
+      DB_NAME: cmp_db
+      DB_SSLMODE: disable
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: dev-only-token
+    ports:
+      - "8083:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      vault:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8083/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  nginx-test:
+    image: nginx:alpine
+    container_name: cmp-nginx-test
+    ports:
+      - "8443:443"
+    volumes:
+      - ./nginx-test.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - issuer-service
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  linux-agent:
+    build:
+      context: ../agents/linux-agent
+    container_name: cmp-agent
+    environment:
+      CMP_API_URL: http://issuer-service:8082
+      CMP_API_TOKEN: agent-dev-token
+      AGENT_ID: agent-1
+      AGENT_HOSTNAME: agent-container
+    ports:
+      - "8084:8084"
+    depends_on:
+      - issuer-service
+    volumes:
+      - agent_certs:/var/lib/cmp-agent/certs
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8084/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: ../frontend/webapp
+    container_name: cmp-frontend
+    environment:
+      REACT_APP_API_URL: http://localhost:8082
+    ports:
+      - "3000:3000"
+    depends_on:
+      - issuer-service
+    volumes:
+      - ../frontend/webapp:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:
+  redis_data:
+  vault_data:
+  agent_certs:

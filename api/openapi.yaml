@@ -1,0 +1,653 @@
+openapi: 3.0.1
+info:
+  title: Certificate Management Platform API
+  version: 1.0.0
+  description: |
+    Enterprise SSL/TLS Certificate Automation Platform API
+    
+    Provides endpoints for certificate issuance, inventory management, agent control, authentication, and webhooks.
+servers:
+  - url: http://localhost:8082/api/v1
+    description: Local development
+  - url: https://api.cmp.example.com/api/v1
+    description: Production
+
+tags:
+  - name: auth
+    description: Authentication and authorization
+  - name: certificates
+    description: Certificate management operations
+  - name: inventory
+    description: Certificate discovery and inventory
+  - name: agents
+    description: Agent management and operations
+  - name: events
+    description: Webhook and event ingestion
+  - name: admin
+    description: Administrative operations
+
+paths:
+  # Authentication endpoints
+  /auth/login:
+    post:
+      tags:
+        - auth
+      summary: User login
+      description: Authenticate user and receive JWT token
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+        '500':
+          description: Internal server error
+
+  /auth/me:
+    get:
+      tags:
+        - auth
+      summary: Get current user
+      description: Get authenticated user information
+      operationId: getCurrentUser
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /auth/logout:
+    post:
+      tags:
+        - auth
+      summary: User logout
+      description: Logout current user
+      operationId: logout
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+        '401':
+          description: Unauthorized
+
+  # Certificate endpoints
+  /certs/request:
+    post:
+      tags:
+        - certificates
+      summary: Request certificate issuance
+      description: Submit a certificate issuance request
+      operationId: requestCertificate
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CertRequest'
+      responses:
+        '202':
+          description: Request accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CertRequestResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /certs:
+    get:
+      tags:
+        - certificates
+      summary: List certificates
+      description: Get a list of certificates with optional filters
+      operationId: listCertificates
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: owner_id
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, expired, revoked, pending]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  certificates:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Certificate'
+                  total:
+                    type: integer
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /certs/{id}:
+    get:
+      tags:
+        - certificates
+      summary: Get certificate by ID
+      description: Retrieve detailed information about a specific certificate
+      operationId: getCertificate
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CertificateDetail'
+        '404':
+          description: Certificate not found
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /certs/{id}/revoke:
+    post:
+      tags:
+        - certificates
+      summary: Revoke certificate
+      description: Revoke a certificate
+      operationId: revokeCertificate
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  enum: [unspecified, keyCompromise, cACompromise, affiliationChanged, superseded, cessationOfOperation]
+      responses:
+        '200':
+          description: Certificate revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+        '404':
+          description: Certificate not found
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '500':
+          description: Internal server error
+
+  # Inventory endpoints
+  /inventory:
+    get:
+      tags:
+        - inventory
+      summary: Get certificate inventory
+      description: Discover and list all certificates in the inventory
+      operationId: getInventory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: source
+          in: query
+          schema:
+            type: string
+        - name: expired
+          in: query
+          schema:
+            type: boolean
+        - name: expiring_soon
+          in: query
+          schema:
+            type: integer
+            description: Days until expiry
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  certificates:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Certificate'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /inventory/expiring:
+    get:
+      tags:
+        - inventory
+      summary: Get expiring certificates
+      description: Get certificates expiring within specified days
+      operationId: getExpiringCertificates
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 30
+            description: Number of days to look ahead
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  certificates:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Certificate'
+                  summary:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      expiring_7d:
+                        type: integer
+                      expiring_15d:
+                        type: integer
+                      expiring_30d:
+                        type: integer
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  # Agent endpoints
+  /agents:
+    get:
+      tags:
+        - agents
+      summary: List agents
+      description: Get a list of registered agents
+      operationId: listAgents
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  agents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Agent'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /agents/{id}/install:
+    post:
+      tags:
+        - agents
+      summary: Install certificate on agent
+      description: Request an agent to install a certificate
+      operationId: installCertificate
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cert_id
+                - path
+              properties:
+                cert_id:
+                  type: string
+                path:
+                  type: string
+                reload_cmd:
+                  type: string
+      responses:
+        '202':
+          description: Installation request accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: string
+                  status:
+                    type: string
+        '404':
+          description: Agent or certificate not found
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  # Events/Webhooks
+  /events:
+    post:
+      tags:
+        - events
+      summary: Ingest webhook event
+      description: Accept webhook events from external systems
+      operationId: ingestWebhook
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookEvent'
+      responses:
+        '200':
+          description: Webhook received
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+components:
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+        expires_at:
+          type: string
+          format: date-time
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+        team:
+          type: string
+
+    CertRequest:
+      type: object
+      required:
+        - owner_id
+        - common_name
+        - adapter_id
+      properties:
+        owner_id:
+          type: string
+          description: Owner/user requesting the certificate
+        common_name:
+          type: string
+          description: Certificate common name (CN)
+        sans:
+          type: array
+          items:
+            type: string
+          description: Subject Alternative Names
+        key_algorithm:
+          type: string
+          enum: [rsa, ecdsa, ed25519]
+          default: rsa
+        key_size:
+          type: integer
+          description: Key size in bits (for RSA/ECDSA)
+          default: 2048
+        adapter_id:
+          type: string
+          description: CA adapter to use for issuance
+        install_targets:
+          type: array
+          items:
+            $ref: '#/components/schemas/InstallTarget'
+          description: Optional installation targets for agent-based deployment
+
+    InstallTarget:
+      type: object
+      required:
+        - agent_id
+        - path
+      properties:
+        agent_id:
+          type: string
+        path:
+          type: string
+          description: Target file path for certificate
+        reload_cmd:
+          type: string
+          description: Command to reload service after installation
+
+    CertRequestResponse:
+      type: object
+      properties:
+        request_id:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        cert_id:
+          type: string
+
+    Certificate:
+      type: object
+      properties:
+        id:
+          type: string
+        fingerprint:
+          type: string
+        subject:
+          type: string
+        sans:
+          type: array
+          items:
+            type: string
+        issuer:
+          type: string
+        not_before:
+          type: string
+          format: date-time
+        not_after:
+          type: string
+          format: date-time
+        key_algo:
+          type: string
+        key_size:
+          type: integer
+        status:
+          type: string
+          enum: [active, expired, revoked, pending]
+        owner_id:
+          type: string
+        last_scanned_at:
+          type: string
+          format: date-time
+        source:
+          type: string
+        days_until_expiry:
+          type: integer
+
+    CertificateDetail:
+      allOf:
+        - $ref: '#/components/schemas/Certificate'
+        - type: object
+          properties:
+            cert_pem:
+              type: string
+            chain_pem:
+              type: string
+            audit_logs:
+              type: array
+              items:
+                $ref: '#/components/schemas/AuditLog'
+
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: integer
+        entity_type:
+          type: string
+        entity_id:
+          type: string
+        action:
+          type: string
+        performed_by:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          type: object
+
+    Agent:
+      type: object
+      properties:
+        id:
+          type: string
+        hostname:
+          type: string
+        ip:
+          type: string
+        last_checkin:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [online, offline, error]
+        capabilities:
+          type: object
+          additionalProperties: true
+        install_paths:
+          type: array
+          items:
+            type: string
+
+    WebhookEvent:
+      type: object
+      required:
+        - event_type
+        - timestamp
+      properties:
+        event_type:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        payload:
+          type: object
+          additionalProperties: true
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+security:
+  - BearerAuth: []

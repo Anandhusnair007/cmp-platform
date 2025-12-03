@@ -1,0 +1,44 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'cmp-production'
+    environment: 'production'
+
+scrape_configs:
+  - job_name: 'cmp-inventory'
+    static_configs:
+      - targets: ['inventory-service:8081']
+    metrics_path: '/metrics'
+
+  - job_name: 'cmp-issuer'
+    static_configs:
+      - targets: ['issuer-service:8082']
+    metrics_path: '/metrics'
+
+  - job_name: 'cmp-adapter'
+    static_configs:
+      - targets: ['adapter-service:8083']
+    metrics_path: '/metrics'
+
+  - job_name: 'cmp-auth'
+    static_configs:
+      - targets: ['auth-service:8084']
+    metrics_path: '/metrics'
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+rule_files:
+  - '/etc/prometheus/rules/*.yml'
