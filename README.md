@@ -2,6 +2,18 @@
 
 A production-grade Certificate Management Platform that automates discovery, issuance, renewal, revocation, deployment, and monitoring of TLS/SSL certificates across cloud, on-prem, and hybrid environments.
 
+## 🚀 Host This Application
+
+**Quick Hosting:** Clone this repository on your server and run:
+```bash
+sudo ./deploy/production/install.sh
+sudo ./deploy/production/scripts/deploy.sh
+```
+
+📖 **See [HOSTING_ON_GITHUB.md](HOSTING_ON_GITHUB.md) for complete hosting instructions**
+
+🔗 **Repository**: https://github.com/Anandhusnair007/cmp-platform
+
 ## 🚀 Quick Start (10-Minute Demo)
 
 ### Prerequisites

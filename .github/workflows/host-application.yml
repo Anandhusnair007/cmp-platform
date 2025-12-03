@@ -1,0 +1,121 @@
+name: Host Application Setup
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'deploy/**'
+      - '.github/workflows/host-application.yml'
+
+jobs:
+  setup-hosting:
+    runs-on: ubuntu-latest
+    name: Setup Application Hosting
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Create hosting documentation
+        run: |
+          cat > HOSTING_SETUP.md << 'EOF'
+          # 🚀 CMP Platform - Hosting Setup Guide
+          
+          ## Quick Start - Host Your Application
+          
+          ### Option 1: Host on Your Server (Recommended)
+          
+          1. **Get a server:**
+             - AWS EC2, DigitalOcean, Linode, or any VPS
+             - Ubuntu 20.04+ or similar
+             - 4+ CPU cores, 8GB+ RAM
+          
+          2. **Clone from GitHub:**
+             ```bash
+             cd /opt
+             git clone https://github.com/Anandhusnair007/cmp-platform.git
+             cd cmp-platform
+             ```
+          
+          3. **Install (15-30 minutes):**
+             ```bash
+             sudo ./deploy/production/install.sh
+             ```
+          
+          4. **Configure:**
+             ```bash
+             sudo cp deploy/production/config/*.env.example /etc/cmp/
+             # Edit config files to set passwords
+             ```
+          
+          5. **Setup SSL:**
+             ```bash
+             sudo ./deploy/production/scripts/setup-ssl.sh
+             ```
+          
+          6. **Deploy:**
+             ```bash
+             sudo ./deploy/production/scripts/deploy.sh
+             ```
+          
+          7. **Access your application:**
+             - Frontend: https://app.yourdomain.com
+             - API: https://api.yourdomain.com
+          
+          ### Option 2: Deploy to Cloud Platforms
+          
+          #### AWS EC2
+          - Launch EC2 instance (Ubuntu 20.04+)
+          - SSH into instance
+          - Follow Option 1 steps above
+          
+          #### DigitalOcean
+          - Create Droplet (Ubuntu 20.04+)
+          - SSH into droplet
+          - Follow Option 1 steps above
+          
+          #### Azure/AWS/GCP
+          - Create VM instance
+          - SSH into instance
+          - Follow Option 1 steps above
+          
+          ## GitHub Repository
+          
+          🔗 **Repository URL:** https://github.com/Anandhusnair007/cmp-platform
+          
+          ## Documentation
+          
+          - Quick Start: `PRODUCTION_QUICKSTART.md`
+          - Full Guide: `deploy/production/PRODUCTION_DEPLOYMENT.md`
+          
+          ## Support
+          
+          See the repository README for more details.
+          
+          EOF
+          echo "✅ Hosting documentation created"
+      
+      - name: Update README with hosting info
+        run: |
+          if [ -f README.md ]; then
+            echo "" >> README.md
+            echo "## 🚀 Hosting" >> README.md
+            echo "" >> README.md
+            echo "To host this application, see [HOSTING_SETUP.md](HOSTING_SETUP.md)" >> README.md
+            echo "Quick start: Clone repository and run \`sudo ./deploy/production/install.sh\`" >> README.md
+          fi
+      
+      - name: Display hosting information
+        run: |
+          echo "✅ Hosting setup complete!"
+          echo ""
+          echo "📖 See HOSTING_SETUP.md for complete instructions"
+          echo "🔗 Repository: https://github.com/${{ github.repository }}"
+          echo ""
+          echo "To host the application:"
+          echo "1. Clone this repository on your server"
+          echo "2. Run: sudo ./deploy/production/install.sh"
+          echo "3. Follow the deployment guide"
+

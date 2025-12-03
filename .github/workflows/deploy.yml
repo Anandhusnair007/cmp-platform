@@ -1,0 +1,109 @@
+name: Deploy CMP Platform
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy Application
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Display deployment info
+        run: |
+          echo "🚀 Deploying CMP Platform"
+          echo "Environment: ${{ github.event.inputs.environment || 'production' }}"
+          echo "Branch: ${{ github.ref }}"
+          echo "Commit: ${{ github.sha }}"
+      
+      - name: Prepare deployment package
+        run: |
+          echo "📦 Preparing deployment package..."
+          mkdir -p deploy-package
+          cp -r deploy/production deploy-package/
+          cp -r deploy/systemd deploy-package/
+          cp -r backend deploy-package/
+          cp -r frontend deploy-package/
+          cp Makefile deploy-package/
+          tar -czf cmp-platform-deploy.tar.gz deploy-package/
+          echo "✅ Package created"
+      
+      - name: Create deployment instructions
+        run: |
+          cat > DEPLOYMENT_INSTRUCTIONS.md << 'EOF'
+          # CMP Platform Deployment Instructions
+          
+          ## Automatic Deployment
+          
+          This repository includes production deployment scripts that can be used to host the application.
+          
+          ## Deployment Steps
+          
+          1. **Clone the repository on your server:**
+             ```bash
+             cd /opt
+             git clone https://github.com/Anandhusnair007/cmp-platform.git
+             cd cmp-platform
+             ```
+          
+          2. **Install the application:**
+             ```bash
+             sudo ./deploy/production/install.sh
+             ```
+          
+          3. **Configure services:**
+             ```bash
+             sudo cp deploy/production/config/*.env.example /etc/cmp/
+             # Edit configuration files
+             ```
+          
+          4. **Deploy:**
+             ```bash
+             sudo ./deploy/production/scripts/deploy.sh
+             ```
+          
+          ## Access the Application
+          
+          After deployment, access at:
+          - Frontend: https://app.yourdomain.com
+          - API: https://api.yourdomain.com
+          
+          ## GitHub Repository
+          
+          Repository URL: https://github.com/Anandhusnair007/cmp-platform
+          
+          EOF
+          echo "✅ Instructions created"
+      
+      - name: Upload deployment artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: deployment-package
+          path: |
+            cmp-platform-deploy.tar.gz
+            DEPLOYMENT_INSTRUCTIONS.md
+          retention-days: 30
+      
+      - name: Display deployment URL
+        run: |
+          echo "✅ Deployment package created successfully!"
+          echo ""
+          echo "📦 Artifacts available in GitHub Actions"
+          echo "🔗 Repository: https://github.com/${{ github.repository }}"
+          echo "📝 See DEPLOYMENT_INSTRUCTIONS.md for hosting steps"
+
